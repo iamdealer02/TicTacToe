@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/country-select-js/2.0.3/css/countrySelect.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+    <style>
+        table {
+          border-collapse: collapse;
+        }
+        
+        table, th, td {
+          border: 1px solid black;
+        }
+        
+        th, td {
+          width: 100px;
+          height: 100px;
+          text-align: center;
+          font-size: 24px;
+          font-weight: bold;
+        }
+        </style>
+</head>
+<body>
+    <h2 class="h2 text-center">WELCOME TO TITS-FOR-TATS <br></h2>
+    
+    <div class="container mt-5" id="playerMode">
+      
+        PLAYER-MODE:
+        <a href=""> <button> PLAYER VS PLAYER  </button> </a>
+        <button onclick="TicTacToe()"> PLAYER VS ENVIRONMENT </button>
+    </div>
+    <div id="gamearea">
+        
+    </div>
+
+
+
+<script>
+function TicTacToe(){
+    console.log('inside')
+    const container = document.getElementById('playerMode');
+    container.innerHTML = "<h3 class='h3 text-center'> PLAYER VS PLAYER </h3> "
+    const gamearea = document.getElementById('gamearea');
+    gamearea.innerHTML = "<table class='border-dark bg-dark align-items-center'>\
+                            <tr>\
+                                <td id='cell00' onclick='cellClicked(00)'></td>\
+                                <td id='cell01' onclick='cellClicked(01)'></td>\
+                                <td id='cell02' onclick='cellClicked(02)'></td>\
+                            </tr>\
+                            <tr>\
+                                <td id='cell10' onclick='cellClicked(10)'></td>\
+                                <td id='cell11' onclick='cellClicked(11)'></td>\
+                                <td id='cell12' onclick='cellClicked(12)'></td>\
+                            </tr>\
+                            <tr>\
+                                <td id='cell20' onclick='cellClicked(20)'></td>\
+                                <td id='cell21' onclick='cellClicked(21)'></td>\
+                                <td id='cell22' onclick='cellClicked(22)'></td>\
+                            </tr>\
+                            </table>";
+}
+function cellClicked(cell_no){
+    var formatted_cell_no = ("0" + cell_no).slice(-2); // Ensure cell_no has two digits
+    var cell = document.getElementById('cell' + formatted_cell_no);
+    console.log(cell)
+    cell.innerText = 'X';
+    //send the cell to the backend
+    $.ajax(
+            console.log('ajax'),
+            { 
+            type: "POST",
+            url: "/aimatch",
+            data: {
+                row_col : cell_no
+            },
+          
+            success: function (response) {  
+                //response will give a cellnumber 
+                console.log(response.data);
+                var ai_response = document.getElementById('cell' + response[0]+ response[1]);
+                cell.innerText = 'O';
+
+            },
+            error: function (error) {
+                console.log(error);
+            }
+        });
+    }
+
+</script>
+
+
+</body>
+</html>
