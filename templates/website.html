@@ -7,9 +7,12 @@
     <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/country-select-js/2.0.3/css/countrySelect.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    
 
     <style>
+        body{
+            background-color: black;
+        }
         table {
           border-collapse: collapse;
         }
@@ -25,77 +28,146 @@
           font-size: 24px;
           font-weight: bold;
         }
+        .container{
+            border: 2px solid deeppink;
+            padding: 5%;
+        }
         </style>
 </head>
 <body>
-    <h2 class="h2 text-center">WELCOME TO TITS-FOR-TATS <br></h2>
     
-    <div class="container mt-5" id="playerMode">
-      
-        PLAYER-MODE:
-        <a href=""> <button> PLAYER VS PLAYER  </button> </a>
-        <button onclick="TicTacToe()"> PLAYER VS ENVIRONMENT </button>
-    </div>
-    <div id="gamearea">
+    <h2 class="h2 text-center text-danger font-weight-bolder">WELCOME TO TITS-FOR-TATS <br></h2>
+    <div class="container mt-5">
+        <div class="row">
+            <div class="col-4 profile-div">
+                <img src="https://bootdey.com/img/Content/avatar/avatar7.png" alt="Admin" class="rounded-circle" width="150">
+                <div class="info d-flex flex-column ">
+                    <div class="mt-3 h5 text-light"> USERNAME  </div>
+                    <button class=" mt-3 btn btn-info border-light leader-board"> VIEW LEADERBOARD</button>
+                </div>
+            </div>
+            <div class="col-8">
+
+                <div id="playerMode" class="mt-5">
+                    <div class="d-flex justify-content-center">
+                        <a href=""> 
+                            <button class="btn btn-lg btn-dark text-light border border-danger font-weight-bold">PLAYER VS PLAYER</button> 
+                        </a>
+                        <button class="btn btn-lg btn-dark text-light ml-5 border border-danger font-weight-bold" onclick="TicTacToe()">PLAYER VS ENVIRONMENT</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="gamearea" class="d-flex justify-content-center ">
         
+        </div>
+        <div id="outcome-area"></div>
     </div>
 
 
 
-<script>
-function TicTacToe(){
-    console.log('inside')
-    const container = document.getElementById('playerMode');
-    container.innerHTML = "<h3 class='h3 text-center'> PLAYER VS PLAYER </h3> "
-    const gamearea = document.getElementById('gamearea');
-    gamearea.innerHTML = "<table class='border-dark bg-dark align-items-center'>\
-                            <tr>\
-                                <td id='cell00' onclick='cellClicked(00)'></td>\
-                                <td id='cell01' onclick='cellClicked(01)'></td>\
-                                <td id='cell02' onclick='cellClicked(02)'></td>\
-                            </tr>\
-                            <tr>\
-                                <td id='cell10' onclick='cellClicked(10)'></td>\
-                                <td id='cell11' onclick='cellClicked(11)'></td>\
-                                <td id='cell12' onclick='cellClicked(12)'></td>\
-                            </tr>\
-                            <tr>\
-                                <td id='cell20' onclick='cellClicked(20)'></td>\
-                                <td id='cell21' onclick='cellClicked(21)'></td>\
-                                <td id='cell22' onclick='cellClicked(22)'></td>\
-                            </tr>\
-                            </table>";
-}
-function cellClicked(cell_no){
-    var formatted_cell_no = ("0" + cell_no).slice(-2); // Ensure cell_no has two digits
-    var cell = document.getElementById('cell' + formatted_cell_no);
-    console.log(cell)
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script>
+        var game_status = 1
+        //game is still going on
+        function TicTacToe(){
+            console.log('inside')
+            if (game_status == 1){
+                const container = document.getElementById('playerMode');
+            container.innerHTML = "<h3 class='h3 text-info font-weight-bolder'>PLAYER VS ENVIRONMENT</h3>";
+            const gamearea = document.getElementById('gamearea');
+            gamearea.innerHTML = "<table id='table-game' class='border-dark bg-dark align-items-center text-light mt-3 ml-3'>\
+                                    <tr>\
+                                        <td id='cell00' onclick=\"cellClicked('00')\"></td>\
+                                        <td id='cell01' onclick=\"cellClicked('01')\"></td>\
+                                        <td id='cell02' onclick=\"cellClicked('02')\"></td>\
+                                    </tr>\
+                                    <tr>\
+                                        <td id='cell10' onclick=\"cellClicked('10')\"></td>\
+                                        <td id='cell11' onclick=\"cellClicked('11')\"></td>\
+                                        <td id='cell12' onclick=\"cellClicked('12')\"></td>\
+                                    </tr>\
+                                    <tr>\
+                                        <td id='cell20' onclick=\"cellClicked('20')\"></td>\
+                                        <td id='cell21' onclick=\"cellClicked('21')\"></td>\
+                                        <td id='cell22' onclick=\"cellClicked('22')\"></td>\
+                                    </tr>\
+                                    </table>";
+            const outcome = document.getElementById('outcome-area');
+            console.log(outcome)
+            outcome.innerHTML = "";
+            }
+
+        }
+
+    function cellClicked(cell_no){
+    var cell = document.getElementById('cell' + cell_no);
+    console.log(cell);
     cell.innerText = 'X';
     //send the cell to the backend
-    $.ajax(
-            console.log('ajax'),
-            { 
-            type: "POST",
-            url: "/aimatch",
-            data: {
-                row_col : cell_no
-            },
-          
-            success: function (response) {  
-                //response will give a cellnumber 
-                console.log(response.data);
-                var ai_response = document.getElementById('cell' + response[0]+ response[1]);
-                cell.innerText = 'O';
 
-            },
-            error: function (error) {
-                console.log(error);
+    $.ajax({
+        type: "POST",
+        url: "/aimatch",
+        data: {
+            row_col: cell_no
+        },
+        success: function (response) {  
+            // response will give a cell number in the form of [2,2]
+            console.log('response from backend', response);
+            if (response.status == 'draw') {
+                console.log(response.message);
+                outcome = document.getElementById('outcome-area')
+                outcome.innerHTML = '<div class="container mt-5 bg-dark text-light">' +
+                    '<div class="card text-center bg-dark">' +
+                    '<div class="card-header">' +
+                    '<h2>' + response.message + '</h2>' +
+                    '</div>' +
+                    '<div class="card-body">' +
+                    '<p class="card-text">Click the button below to restart the game.</p>' +
+                    '<button onclick="TicTacToe()" class="btn btn-primary">RESTART THE GAME</button>'+
+                    '<p class="card-text Mt-3">Or View Your LeaderBoard</p>'+
+                    '<button class="btn btn-primary">LEADERBOARD</button>' +
+                    '</div>' +
+                    '</div>' +
+                    '</div>';
+                    game_status = 0
+                    //draw
+            } else if (response.status === 'win') {
+                var ai_response = document.getElementById('cell' + response.next_move[0] + response.next_move[1]);
+                ai_response.innerText = 'O';
+                outcome = document.getElementById('outcome-area')
+                outcome.innerHTML = '<div class="container mt-5 bg-dark text-light">' +
+                    '<div class="card text-center bg-dark">' +
+                    '<div class="card-header">' +
+                    '<h2>' + response.message + '</h2>' +
+                    '</div>' +
+                    '<div class="card-body">' +
+                    '<p class="card-text">Click the button below to restart the game.</p>' +
+                    '<button onclick="TicTacToe()" class="btn btn-primary">RESTART THE GAME</button>' +
+                    '<p class="card-text Mt-3">Or View Your LeaderBoard</p>'+
+                    '<button class="btn btn-primary">LEADERBOARD</button>' + 
+                    '</div>' +
+                    '</div>' +
+                    '</div>';
+                    game_status = 0
+                    //winner 
+    
+            } else {
+                var ai_response = document.getElementById('cell' + response.next_move[0] + response.next_move[1]);
+                console.log(ai_response, 'new cell id');
+                ai_response.innerText = 'O';
+                game_status = 1
+                //game is still going on
             }
-        });
-    }
+        },
+        error: function (error) {
+            console.log(error);
+        }
+    });
+}
 
-</script>
-
+    </script>
 
 </body>
 </html>

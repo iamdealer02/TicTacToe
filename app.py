@@ -139,6 +139,11 @@ class Game:
                         win_build =  value_win[0]
                     elif self.board[value_win[1][0]][value_win[1][1]] == '':
                         win_build = value_win[1]
+                else:
+                    #return a random empty cell
+                    empty_cells = [[i, j] for i in range(3) for j in range(3) if self.board[i][j] == '']
+                    random_choice =  random.choice(empty_cells) if empty_cells else None
+
             if win_case:
                 print('win case')
                 return win_case
@@ -148,24 +153,29 @@ class Game:
             if win_build:
                 print('win build')
                 return win_build
+            else:
+                return random_choice
 
+    def reset(self):
+        Game.ai_moves = []
+        Game.previous_moves = []
+        self.board = [['', '', ''], ['', '', ''], ['', '', '']]
+        self.previous_move = None
+        self.movenumber = 0
 
-    def pretty_print(self):
-        for i in range(3):
-            print("    |     ".join(self.board[i]))
-            if i < 2:
-                print("-" * 20)
     def update_board(self, move, player):
         #name the empty cell with the player that occupied it
+       
         self.board[move[0]][move[1]] = player
         self.previous_move = move
-        
+    
 
     def player1Move(self, move):
         Game.previous_moves.append(move)
         self.update_board(move, self.player1)
+
         if self.environment == 1:
-            self.aiMove()
+            return self.aiMove()
 
     def Player2Move(self, move):
         self.update_board(move, self.Player2)
@@ -174,11 +184,13 @@ class Game:
 
     def aiMove(self):
         move = self.algorithm()
+        if move is None:
+            return self.won()
         Game.ai_moves.append(move)
         self.movenumber +=1
         self.update_board(move, self.environment)
+        return move
         
-    
     def won(self):
         for i in Game.win_cases: 
             player1 = 0
@@ -188,7 +200,7 @@ class Game:
                 if self.board[j[0]][j[1]] == self.player1:
                     player1 += 1
                     if player1 == 3:
-                        return self.player1
+                        return [self.player1, i]
                 if self.board[j[0]][j[1]] == self.Player2:
                     player2 += 1
                     if player2 == 3:
@@ -196,11 +208,13 @@ class Game:
                 if j in self.ai_moves:  # Check if the current cell is in ai_moves
                     ai += 1 
                     if ai == 3:
-                        return self.environment
+                        return  [self.environment, i]
 
         # Check for a draw condition if no winning condition is met
         if not any('' in row for row in self.board):
+            self.reset()
             return 'Draw'
+        
 
 
 @app.route('/', methods= ['GET','POST'])
@@ -245,16 +259,25 @@ def aimatch():
     if tictactoe is None:
         tictactoe = Game('X', 0, 1)
     row_col = str(request.form.get('row_col'))
+   
     row = int(row_col[0])
     column = int(row_col[1])
-    if [row,column] in Game.ai_moves or Game.previous_moves:
-        return('Error')
+ 
+    if [row, column] in tictactoe.ai_moves or [row, column] in tictactoe.previous_moves:
+        return jsonify({'status': 'error', 'message': 'Invalid move'})
     else:
-        tictactoe.player1Move([row,column])
-        if tictactoe.won():
-            return(tictactoe.won())
+        next_move = tictactoe.player1Move([row, column])
+        outcome = tictactoe.won()
+        print(outcome)
+        if outcome == 'Draw' or next_move == 'Draw':
+            tictactoe.reset()
+            return jsonify({'status': 'draw', 'message': 'Game is a draw', 'next_move': next_move})
         
-    
+        elif outcome:
+            tictactoe.reset()
+            return jsonify({'status': 'win', 'message': f'Player {outcome[0]} wins', 'next_move': next_move})
+        return jsonify({'status': 'next_move', 'message': 'Next move', 'next_move': next_move})
+
 
 @app.route('/website', methods=['GET', 'POST'])
 @login_required
