@@ -9,8 +9,37 @@ import random
 from flask_debugtoolbar import DebugToolbarExtension
 import logging
 import time
+#setting up MongoDB server for saving the wins 
+from pymongo import MongoClient   
+
 
 app = Flask(__name__)
+
+# Create a new client and connect to the server
+client = MongoClient("mongodb://localhost:27017")
+
+
+db = client['TicTacToe']
+collection = db['LeaderBoard']
+
+try:
+    client.admin.command('ping')
+    print("Pinged your deployment. You successfully connected to MongoDB!")
+except Exception as e:
+    print(e)
+
+def add_wins(username, win):
+    existing_user = collection.find_one({'username': username})
+
+    if existing_user:
+        new_wins = existing_user['win'] + win
+        collection.update_one({'username': username}, {"$set": {'win': new_wins}})
+    else:
+        wins = {
+            'username': username,
+            'win': win
+        }
+        collection.insert_one(wins)
 
 
 #setting up thr Toolbar in debug mode
@@ -71,7 +100,11 @@ login_manager.init_app(app)
 @login_manager.user_loader
 def load_user(user_id):
     data = get_by_id(user_id)
-    return User(data[0], data[1], data[2], data[3])
+    if data is not None:
+        return User(data[0], data[1], data[2], data[3])
+    else:
+        return None
+
 
 class Game:
     win_cases = [[[0,0],[0,1],[0,2]],[[1,0],[1,1],[1,2]],[[2,0],[2,1],[2,2]],  # horizontal lines
@@ -187,6 +220,7 @@ class Game:
         return move
         
     def won(self):
+        #add into the database also
         for i in Game.win_cases: 
             player1 = 0
             player2 = 0
@@ -195,6 +229,7 @@ class Game:
                 if self.board[j[0]][j[1]] == self.player1:
                     player1 += 1
                     if player1 == 3:
+                        add_wins(current_user.username , 1 )
                         return ['Player 1', i]
                 if self.board[j[0]][j[1]] == self.Player2:
                     player2 += 1
@@ -237,24 +272,23 @@ def register():
         return redirect('/login')
     return render_template('register.html', form= form)
 
-
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-
     form = loginForm()
     if form.validate_on_submit():
         email = form.email.data
         password = form.password.data
-        print(email)
         user = check_user(email)
-        Us = load_user(user[0]) 
-        print(Us.email, Us.password)
-        if email == Us.email and password == Us.password:
-            login_user(Us)
-            flash("successfully logged in")
-            return redirect(url_for('website'))
+        if user is not None:
+            Us = load_user(user[0])
+            if email == Us.email and password == Us.password:
+                login_user(Us)
+                flash("Successfully logged in")
+                return redirect(url_for('website'))
+            else:
+                raise ValueError("Invalid email or password")
         else:
-            flash('Login Failed. Invalid Credentials')
+            raise ValueError("User does not exist")
     return render_template('login.html', form=form)
 
   
@@ -376,15 +410,16 @@ def Player2_moves():
 @app.route('/website', methods=['GET', 'POST'])
 @login_required
 def website():
-    return render_template('website.html')
+    return render_template('website.html', username= current_user.username)
 
 
 
 @app.route('/leaderboard', methods=['GET', 'POST'])
 @login_required
 def leaderboard():
-    return render_template('leaderboard.html')
-#finish leaderboard, player vs player, update profile, 
+    leaderboard_data = collection.find({}, {'_id': 0, 'username': 1, 'win': 1}).sort('win', -1)
+    return render_template('leaderboard.html', leaderboard_data = leaderboard_data, username = current_user.username)
+
 
 # @app.route('/get_media/<media_id>')
 # def get_media(media_id):
