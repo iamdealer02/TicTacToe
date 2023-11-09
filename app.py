@@ -18,7 +18,7 @@ app = Flask(__name__)
 # Create a new client and connect to the server
 client = MongoClient("mongodb://localhost:27017")
 
-
+tictactoe = None
 db = client['TicTacToe']
 collection = db['LeaderBoard']
 
